@@ -1,0 +1,259 @@
+<!DOCTYPE html> 
+<html lang="en">
+  	<head>
+    	<meta charset="utf-8">
+    	<title>My Todo App</title>
+    	<link rel="stylesheet" href="css/bootstrap.min.css">
+		<style>
+		.red
+		{
+			color:red;
+		}
+		</style>
+  	</head>
+  	<body> 
+    	<div class="container" id="main">
+			<h2 class="sub-header">My Todo App</h2>
+			<div class="form-group">
+				<form>
+					<input type="text" class="form-control" id="task" name="Item" placeholder="What you want to do?">
+				</form>
+			</div>
+			<hr>
+			<div id="content">
+			<ul id="myTab" class="nav nav-pills">
+			  <li class="active"><a href="#" onclick="showAllTasks();">All</a></li>
+			  <li><a href="#" onclick="showCompletedTasks();">Completed</a></li>
+			  <li><a href="#" onclick="showPendingTasks();">Pending</a></li>
+			</ul>
+			<hr>
+			<div class="tab-content">
+			  <div class="tab-pane active">
+				<div class="checkbox" id="selAll">
+				    <label>
+				      <input type="checkbox" id="All"> Select/Deselect All
+				    </label>
+				</div>
+				<hr>	
+			  	<ul class="todo list-unstyled">
+				</ul>
+			  </div>
+			  <div class="tab-pane">
+			  </div>
+			  <div class="tab-pane">
+			  </div>
+				<div class="btn-group pull-right">
+			     <button type="button" onclick="removeCompletedTasks();" id="complete" class="btn btn-primary btn-lg btn-block">Remove Completed</button>
+			   </div>
+			</div>
+			</div>
+		</div>
+  		<footer>
+			<script src="js/jquery.js"></script>
+  			<script src="js/bootstrap.min.js"></script>
+			<script>
+			
+			var updatingAnyTasks = true;
+			var todoTask='';
+			
+			$(function() {
+				
+				hideContent();
+				
+				//Add a tast after the user enters the content and presses "Enter"
+				$('form').submit(function () {
+				    if ($('input').val() !== '') {
+				        var input_value = $('input').val();
+				        $('.todo').append('<div class="checkbox inline pending" onmouseover="displayRemove(this);" onmouseout="hideRemove(this);" style="margin-left:20px;"><input id="todo" type="checkbox" onclick="updateTask(this);"><li><span class="col-xs-3" contenteditable>'+ input_value + '</span></li><a id="remove" href=""><span class="glyphicon glyphicon-remove" style="display:none;"></span></a></div><hr>');
+				
+					showContent();
+				    } else {
+				        alert("You must enter something to add");
+				    };
+				    $('input').val('');
+				    return false;
+				});
+				
+				//Show different tabs
+				$('#myTab a').click(function (e) {
+				  e.preventDefault()
+				  $(this).tab('show')
+				})
+
+				//On Clicking Select/Deselect All
+				$('#All').click(function(event) { 
+				   updateAllTasks(this);	
+				});
+				
+				//Update all tasks on clicking Select/DeSelectAll
+				function updateAllTasks(obj){
+					if(obj.checked) { 
+			            $('.checkbox #todo').each(function() { 
+			                this.checked = true;
+							taskCompleted(this);
+							updatingAnyTasks = false;              
+			            });
+			        } else {
+			            $('.checkbox #todo').each(function() {
+			                this.checked = false;
+							taskNotCompleted(this);
+							updatingAnyTasks = true;                       
+			            });         
+			        }
+				}
+				
+				//Remove a task
+				$(document).on('click', '#remove', function (e) {
+				    e.preventDefault();
+					if(!$(this).hasClass("no")){
+				    	$(this).parent().remove();
+					}
+					hideContent();
+				});
+				
+				//Show content when any task is present
+				function showContent(){
+					$('#content').has('#todo').show();
+					checkAllTasksStatus();
+				}
+				
+			});	
+
+			</script>
+			<script>
+			
+				//Display Remove for a task
+				function displayRemove(obj){
+					$(obj).find("span.glyphicon").show();
+				}
+				
+				//Display Remove for a task
+				function hideRemove(obj){
+					$(obj).find("span.glyphicon").hide();
+				}
+			
+				//Hide content if no tasks are present
+				function hideContent(){
+					if (!$(".todo li span").hasClass("col-xs-3")) {
+						$('#content').hide();
+					}
+				}
+			
+				//Update a particular task
+				function updateTask(obj){			
+					if(obj.checked) {
+						taskCompleted(obj);
+						checkAllTasksStatus();
+			        } else {
+						taskNotCompleted(obj);
+						//If we edit any item, we need to remove allSelected checkbox and set flag true for updating a task
+						$('#All').prop('checked',false);
+						updatingAnyTasks = true;
+			        }
+				}
+				
+				//Show completed tasks
+				function showCompletedTasks(){
+					$(".pending").hide();
+					$(".completed").show();
+					$("#selAll").hide();
+					$("#complete").addClass("disabled");
+					$('input:checkbox').hide();
+				}
+				
+				//Remove all completed tasks
+				function removeCompletedTasks(){
+					//Save data before removing
+					saveTasks();
+					$(".completed").remove();
+					hideContent();
+				}
+				
+				//Save Tasks with their status
+				function saveTasks(){
+					$('.todo div').each(function() {
+						if($(this).hasClass("completed")){
+							if(todoTask!='') {
+								todoTask = todoTask + '{name="'+$(this).find("span.col-xs-3").text()+'",status="completed"},';
+							} else {
+								todoTask = '{name="'+$(this).find("span.col-xs-3").text()+'",status="completed"},';
+							}
+						} else {
+							if(todoTask!='') {
+								todoTask = todoTask + '{name="'+$(this).find("span.col-xs-3").text()+'",status="pending"},';
+							} else {
+								todoTask = '{name="'+$(this).find("span.col-xs-3").text()+'",status="pending"},';
+							}
+						}
+					});
+				}	
+				
+				//Show pending tasks
+				function showPendingTasks(){
+					$(".completed").hide();
+					$(".pending").show();
+					$("#selAll").hide();
+					$('input:checkbox').hide();
+					$("#complete").addClass("disabled");
+				}
+				
+				//After hiding tasks in pending or completed, we need to again show all tasks
+				function showAllTasks(){
+					$(".completed").show();
+					$(".pending").show();
+					$("#selAll").show();
+					$('input:checkbox').show();
+					$("#complete").removeClass("disabled");
+				}
+				
+				//Update task so that it is completed and not deletable or editable
+				function taskCompleted(obj){ 
+					$(obj).next().find('span.col-xs-3').addClass("red");
+		 			$(obj).next().next().addClass("no");
+					$(obj).parent().addClass("completed");
+					$(obj).parent().removeClass("pending");
+					$(obj).next().next().children().removeClass("glyphicon-remove");
+					$(obj).next().next().children().addClass("glyphicon-check");
+					$(obj).next().children().attr("contenteditable","false");
+				}
+				
+				//Update task such that it is not completed and can be edited or deleted
+				function taskNotCompleted(obj){
+					$(obj).next().find('span.col-xs-3').removeClass("red");  
+					$(obj).next().next().removeClass("no");
+					$(obj).parent().addClass("pending");
+					$(obj).parent().removeClass("completed");
+					$(obj).next().next().children().addClass("glyphicon-remove");
+					$(obj).next().next().children().removeClass("glyphicon-check");
+					$(obj).next().children().attr("contenteditable","true");
+				}
+				
+				//At any point we need to check all tasks are selected as complete or not
+				function checkAllTasksStatus(){
+					if(!$( ".checkbox" ).hasClass("pending")){
+						$('#All').prop('checked',true);
+						updatingAnyTasks = false;
+					} else {
+						$('#All').prop('checked',false);
+						updatingAnyTasks = true;
+					}
+				}
+				
+				function removeall()
+				{
+				$("#complete").on("click",function(){
+ {
+ $(".tab-pane active li input:checked").parent().remove();
+ }
+ })
+ }
+ $(document).on("dblclick","li",function()
+ {
+  var inputText = '<input type="text" required="" autofocus="" value=' + $(this).find("span").html() + '>';
+    $(this).find("span").html(inputText);
+ });
+ 
+			</script>
+		</footer>
+	</body>
+</html>
